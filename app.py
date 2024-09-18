@@ -360,7 +360,7 @@ def translate_to_bengali():
 
 # Hinglish model configuration
 hinglish_translation_config = {
-    "temperature": 0,
+    "temperature": 0.1,
     "top_p": 0.85,
     "top_k": 40,
     "max_output_tokens": 8192,
