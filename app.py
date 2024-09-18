@@ -358,6 +358,119 @@ def translate_to_bengali():
         logging.error(f"Error during Bengali translation processing: {e}")
         return jsonify({"error": "An error occurred while processing your request."}), 500
 
+# Hinglish model configuration
+hinglish_translation_config = {
+    "temperature": 1,
+    "top_p": 0.95,
+    "top_k": 64,
+    "max_output_tokens": 8192,
+    "response_mime_type": "text/plain",
+}
+
+hinglish_translation_model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    generation_config=hinglish_translation_config,
+)
+
+# Predefined chat history for Hinglish translation
+predefined_hinglish_translation_history = [
+    {
+        "role": "user",
+        "parts": [
+            "আমি যেই text গুলো লিখে দিব বাংলায় সেগুলোকে তুমি হিন্দির hinglish এ রূপান্তর করে দেবে যেমন এটি যে ভাষার হোক না কেন। Hinglish মানে হল এরকম হিন্দি এবং ইংলিশ মিলে যেই ভাষাটি তৈরি হয়েছে। যেমন:\n\nপ্রস্তুতি সকল কিছুর চালিকাশক্তি!\n\nএটি hinglish এ: \n\nTaiyaari sab kuch ka chalakshakti hai!\n\n\nএখানে অন্য যেই সকল প্রশ্ন করা হোক না কেন তোমার ওই সকল প্রশ্নগুলোকেও hinglish এ রূপান্তর করে দিতে হবে। শুধু তোমাকে জিজ্ঞাসা করা হয় আর hinglish রূপান্তর করার প্রয়োজন নেই তুমি সেটিকে hinglish এ রূপান্তর করে দিবে মানে কোন প্রশ্ন কিংবা যাই হোক সকল কিছুকে।",
+        ],
+    },
+    {
+        "role": "model",
+        "parts": [
+            "ঠিক আছে! আমি আপনার বাংলা লেখাগুলোকে hinglish এ রূপান্তর করতে প্রস্তুত! আপনি শুধু বাংলায় লিখুন, বাকিটা আমার উপর ছেড়ে দিন! 😁 \n",
+        ],
+    },
+    {
+        "role": "user",
+        "parts": [
+            "বাংলাদেশ সব থেকে সুন্দর দেশ",
+        ],
+    },
+    {
+        "role": "model",
+        "parts": [
+            "Bangladesh sabse sundar desh hai",
+        ],
+    },
+    {
+        "role": "user",
+        "parts": [
+            "ঠিক আছে আর ইংলিশে ট্রান্সলেট করার প্রয়োজন নেই",
+        ],
+    },
+    {
+        "role": "model",
+        "parts": [
+            "Theek hai, aur English mein translate karne ki zaroorat nahin hai",
+        ],
+    },
+    {
+        "role": "user",
+        "parts": [
+            "日子过得很好，突然就好像发生了什么事情।",
+        ],
+    },
+    {
+        "role": "model",
+        "parts": [
+            "Zindagi bahut achi chal rahi thi, achanak se jaise kuchh ho gaya. \n",
+        ],
+    },
+    {
+        "role": "user",
+        "parts": [
+            "सुंदर सुंदर होकर सुंदर सुंदर नहीं है।",
+        ],
+    },
+    {
+        "role": "model",
+        "parts": [
+            "Sundar sundar hokar sundar sundar nahi hai.",
+        ],
+    },
+]
+
+# Hinglish chat sessions
+hinglish_translation_sessions = {}
+
+@app.route('/hi', methods=['GET'])
+def translate_to_hinglish():
+    query = request.args.get('q')
+    user_id = request.args.get('id')
+
+    if not query or not user_id:
+        return jsonify({"error": "Please provide both query and id parameters."}), 400
+
+    try:
+        if user_id not in hinglish_translation_sessions:
+            hinglish_translation_sessions[user_id] = {
+                "chat": hinglish_translation_model.start_chat(history=predefined_hinglish_translation_history),
+                "history": deque(maxlen=5),
+                "last_activity": time.time()
+            }
+
+        chat_session = hinglish_translation_sessions[user_id]["chat"]
+        history = hinglish_translation_sessions[user_id]["history"]
+
+        history.append(f"User: {query}")
+        response = chat_session.send_message(query)
+        history.append(f"Bot: {response.text}")
+
+        hinglish_translation_sessions[user_id]["last_activity"] = time.time()
+
+        return jsonify({"response": response.text})
+    
+    except Exception as e:
+        logging.error(f"Error during Hinglish translation processing: {e}")
+        return jsonify({"error": "An error occurred while processing your request."}), 500
+        
+
 @app.route('/ping', methods=['GET'])
 def ping():
     return jsonify({"status": "alive"})
