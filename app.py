@@ -235,9 +235,9 @@ def translate_to_english():
         return jsonify({"error": "An error occurred while processing your request."}), 500
     # Bengali translation model configuration
 bengali_translation_config = {
-    "temperature": 1,
-    "top_p": 0.95,
-    "top_k": 64,
+    "temperature": 0,
+    "top_p": 0.80,
+    "top_k": 50,
     "max_output_tokens": 8192,
     "response_mime_type": "text/plain",
 }
